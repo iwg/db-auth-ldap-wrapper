@@ -1,0 +1,16 @@
+{
+  "author": "",
+  "name": "db-auth-ldap-wrapper",
+  "version": "0.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/iwg/db-auth-ldap-wrapper.git"
+  },
+  "engines": {
+    "node": "~0.6.4"
+  },
+  "dependencies": {
+    "bunyan": "~0.6.8"
+  },
+  "devDependencies": {}
+}
