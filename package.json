@@ -1,0 +1,17 @@
+{
+  "author": "",
+  "name": "db-auth-ldap-wrapper",
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/iwg/db-auth-ldap-wrapper.git"
+  },
+  "engines": {
+    "node": "~0.6.4"
+  },
+  "dependencies": {
+    "ldapjs": "~0.5.0",
+    "nodejs-mysql-naive": "~0.4.5"
+  },
+  "devDependencies": {}
+}
