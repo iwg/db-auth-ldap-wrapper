@@ -32,6 +32,10 @@ server.bind('ou=users', function(req, res, next) {
   return next();
 });
 
+// TODO find username by email address
+
+// TODO find public user information by username
+
 server.listen(1389, function() {
   console.log('LDAP server listening at %s', server.url);
 });
