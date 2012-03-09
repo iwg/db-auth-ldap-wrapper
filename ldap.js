@@ -31,18 +31,21 @@ function authenticate_db(username,password){
     }
     else{
       if(log[username]){
-        if(Date().getTime-log[username][0]>config.loginTime){
-          log[username][0]=Date().getTime();
-          log[username][1]=1;
+        if(Date().getTime-log[username].timestamp>config.loginTime){
+          log[username]={
+            timestamp:Date.getTime(),
+            count:1
+          };
         }
         else{
-          ++log[username][1];
+          ++log[username].count;
         }
       }
       else{
-        log[username]=new Array();
-        log[username][0]=Date().getTime();
-        log[username][1]=1;
+        log[username]={
+          timestamp:Date.getTime(),
+          count:1
+        };
         return false;
       }
     }
@@ -59,9 +62,9 @@ function authenticate(username, password) {
   // TODO connect with our own user database for authentication
   //return username === password;
   if(log[username]){
-    var ms=log[username][0];
-    var cnt=log[username][1];
-    if(Date().getTime()-ms<=config.loginTime&&cnt>config.loginLimit)return false;
+    var timestamp=log[username].timestamp;
+    var count=log[username].count;
+    if(Date().getTime()-timestamp<=config.loginTime && count>config.loginLimit)return false;
     else return authenticate_db(username,password);
   }
   else return authenticate_db(username,password);
