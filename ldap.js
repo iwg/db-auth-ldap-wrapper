@@ -3,7 +3,7 @@
 //                                                         ^^^^^^^^
 
 var config=require("./config");
-var db=require("mysql-native").createTCPClient(config.dbIP);
+var db=require("mysql-native").createTCPClient(config.dbHost);
 var crypto=require('crypto');
 var log=[];
 
@@ -15,18 +15,18 @@ db.auth(config.dbPass,config.dbUser);
 // @return false if the authentication is failed
 
 function needToReset(record){
-    if(Date().getTime-log[username][0]>config.loginTime)return true;
+    if(Date().getTime-log[username][0]>config.loginTrialTimeout)return true;
     return false;
 }
 
 function multiLogin(record){
-    if(Date().getTime()-timestamp<=config.loginTime && count>config.loginLimit)return true;
+    if(Date().getTime()-timestamp<=config.loginTrialTimeout && count>config.loginTrialLimit)return true;
     return false;
 }
 
 function authenticate_db(username,password){
-  db.query("use "+config.dbNameofUser);
-  var result=db.query("SELECT * from "+config.dbNameofUser+" WHERE name='"+escape(username)+"';");
+  db.query("use "+config.userTableName);
+  var result=db.query("SELECT * from "+config.userDatabase+" WHERE name='"+escape(username)+"';");
   var cnt=0;
   result.on('row',function(r){
     ++cnt;
