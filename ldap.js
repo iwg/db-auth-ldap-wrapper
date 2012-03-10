@@ -13,25 +13,36 @@ db.auth(config.dbPass,config.dbUser);
 // Authenticate according to the username/password provided
 // @return true if the credentials are correct
 // @return false if the authentication is failed
+
+function needToReset(record){
+    if(Date().getTime-log[username][0]>config.loginTime)return true;
+    return false;
+}
+
+function multiLogin(record){
+    if(Date().getTime()-timestamp<=config.loginTime && count>config.loginLimit)return true;
+    return false;
+}
+
 function authenticate_db(username,password){
   db.query("use "+config.dbNameofUser);
-  var result=db.query("SELECT * from "+config.dbNameofUser+" WHERE name='"+username+"';");
+  var result=db.query("SELECT * from "+config.dbNameofUser+" WHERE name='"+escape(username)+"';");
   var cnt=0;
   result.on('row',function(r){
     ++cnt;
-    var iter=r['iter'];
-    var salt=r['salt'];
+    var iter=r.iter;
+    var salt=r.salt;
     for(var i=0;i<iter;i++){
       password+=salt;
       password=crypto.createHash("md5").update(password).digest("hex");
     }
-    if(password==r['pass']){
-      return true;
+    if(password==r.pass){
       if(log[username])delete log[username];
+      return true;
     }
     else{
       if(log[username]){
-        if(Date().getTime-log[username].timestamp>config.loginTime){
+        if(needToReset(log[username])){
           log[username]={
             timestamp:Date.getTime(),
             count:1
@@ -64,8 +75,8 @@ function authenticate(username, password) {
   if(log[username]){
     var timestamp=log[username].timestamp;
     var count=log[username].count;
-    if(Date().getTime()-timestamp<=config.loginTime && count>config.loginLimit)return false;
-    else return authenticate_db(username,password);
+    if(multiLogin())return false;
+    return authenticate_db(username,password);
   }
   else return authenticate_db(username,password);
 }
