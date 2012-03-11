@@ -6,6 +6,7 @@ var config=require("./config");
 var db=require("mysql-native").createTCPClient(config.dbHost);
 var crypto=require('crypto');
 var log=[];
+var now=new Date();
 
 db.auto_prepare=true;
 db.auth(config.dbPass,config.dbUser);
@@ -14,19 +15,17 @@ db.auth(config.dbPass,config.dbUser);
 // @return true if the credentials are correct
 // @return false if the authentication is failed
 
-function needToReset(record){
-    if(Date().getTime-log[username][0]>config.loginTrialTimeout)return true;
-    return false;
+function need_To_Reset(record){
+    return now.getTime-record.timestamp>config.loginTrialTimeout;
 }
 
-function multiLogin(record){
-    if(Date().getTime()-timestamp<=config.loginTrialTimeout && count>config.loginTrialLimit)return true;
-    return false;
+function multi_Login(record){
+    return now.getTime()-record.timestamp<=config.loginTrialTimeout && record.count>config.loginTrialLimit;
 }
 
 function authenticate_db(username,password){
   db.query("use "+config.userTableName);
-  var result=db.query("SELECT * from "+config.userDatabase+" WHERE name='"+escape(username)+"';");
+  var result=db.query("SELECT * FROM ? WHERE name=?", [config.userDatabase, escape(username)]);
   var cnt=0;
   result.on('row',function(r){
     ++cnt;
@@ -42,9 +41,9 @@ function authenticate_db(username,password){
     }
     else{
       if(log[username]){
-        if(needToReset(log[username])){
+        if(need_To_Reset(log[username])){
           log[username]={
-            timestamp:Date.getTime(),
+            timestamp:now.getTime(),
             count:1
           };
         }
@@ -54,7 +53,7 @@ function authenticate_db(username,password){
       }
       else{
         log[username]={
-          timestamp:Date.getTime(),
+          timestamp:now.getTime(),
           count:1
         };
         return false;
@@ -75,7 +74,7 @@ function authenticate(username, password) {
   if(log[username]){
     var timestamp=log[username].timestamp;
     var count=log[username].count;
-    if(multiLogin())return false;
+    if(multi_Login())return false;
     return authenticate_db(username,password);
   }
   else return authenticate_db(username,password);
