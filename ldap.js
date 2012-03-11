@@ -6,7 +6,6 @@ var config=require("./config");
 var db=require("mysql-native").createTCPClient(config.dbHost);
 var crypto=require('crypto');
 var log=[];
-var now=new Date();
 
 db.auto_prepare=true;
 db.auth(config.dbPass,config.dbUser);
@@ -16,11 +15,11 @@ db.auth(config.dbPass,config.dbUser);
 // @return false if the authentication is failed
 
 function need_To_Reset(record){
-    return now.getTime-record.timestamp>config.loginTrialTimeout;
+    return (+ new Date())-record.timestamp>config.loginTrialTimeout;
 }
 
 function multi_Login(record){
-    return now.getTime()-record.timestamp<=config.loginTrialTimeout && record.count>config.loginTrialLimit;
+    return (+ new Date())-record.timestamp<=config.loginTrialTimeout && record.count>config.loginTrialLimit;
 }
 
 function authenticate_db(username,password){
@@ -43,7 +42,7 @@ function authenticate_db(username,password){
       if(log[username]){
         if(need_To_Reset(log[username])){
           log[username]={
-            timestamp:now.getTime(),
+            timestamp:(+ new Date()),
             count:1
           };
         }
@@ -53,7 +52,7 @@ function authenticate_db(username,password){
       }
       else{
         log[username]={
-          timestamp:now.getTime(),
+          timestamp:(+ new Date()),
           count:1
         };
         return false;
