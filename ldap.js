@@ -22,9 +22,9 @@ function multi_Login(record){
     return (+ new Date())-record.timestamp<=config.loginTrialTimeout && record.count>config.loginTrialLimit;
 }
 
-function authenticate_db(username,password){
-  db.query("use "+config.userTableName);
-  var result=db.query("SELECT * FROM ? WHERE name=?", [config.userDatabase, escape(username)]);
+function authenticate_db(username,password,next,res){
+  db.query("use "+config.userDatabase);
+  var result=db.execute("SELECT * FROM "+config.userTableName+" WHERE name=(?)", [escape(username)]);
   var cnt=0;
   result.on('row',function(r){
     ++cnt;
@@ -36,7 +36,8 @@ function authenticate_db(username,password){
     }
     if(password==r.pass){
       if(log[username])delete log[username];
-      return true;
+      res.end();
+      next();
     }
     else{
       if(log[username]){
@@ -55,28 +56,26 @@ function authenticate_db(username,password){
           timestamp:(+ new Date()),
           count:1
         };
-        return false;
+        next(new ldap.InvalidCredentialsError());
       }
     }
   });
   result.on('end',function(){
     if(!cnt)
-      return false;
+      next(new ldap.InvalidCredentialsError());
   });
 }
 
-function authenticate(username, password) {
+function authenticate(username, password,next,res) {
   // this is just an example which allows any pair of 
   // username/password which are the same
   // TODO connect with our own user database for authentication
   //return username === password;
   if(log[username]){
-    var timestamp=log[username].timestamp;
-    var count=log[username].count;
-    if(multi_Login())return false;
-    return authenticate_db(username,password);
+    if(multi_Login(log[username]))return false;
+    authenticate_db(username,password,next,res);
   }
-  else return authenticate_db(username,password);
+  authenticate_db(username,password,next,res);
 }
 
 var ldap = require('ldapjs');
@@ -88,15 +87,13 @@ server.bind('ou=users', function(req, res, next) {
   // which is { ou: 'users' } in the following shifting
   // we expect the first pair to be something like { cn: 'username' }
   var first_pair = req.dn.shift();
-  
+
   if (!first_pair.cn)
     return next(new ldap.InvalidCredentialsError());
   
-  if (!authenticate(first_pair.cn, req.credentials))
-    return next(new ldap.InvalidCredentialsError());
+  authenticate(first_pair.cn, req.credentials,next,res);
   
-  res.end();
-  return next();
+  //res.end();
 });
 
 // TODO find username by email address
