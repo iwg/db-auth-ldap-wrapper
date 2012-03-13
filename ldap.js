@@ -22,7 +22,7 @@ function multi_Login(record){
     return (+ new Date())-record.timestamp<=config.loginTrialTimeout && record.count>config.loginTrialLimit;
 }
 
-function authenticate_db(username,password,next,res){
+function authenticate_db(username,password,next){
   db.query("use "+config.userDatabase);
   var result=db.execute("SELECT * FROM "+config.userTableName+" WHERE name=(?)", [escape(username)]);
   var cnt=0;
@@ -36,8 +36,7 @@ function authenticate_db(username,password,next,res){
     }
     if(password==r.pass){
       if(log[username])delete log[username];
-      res.end();
-      next();
+      next(0);
     }
     else{
       if(log[username]){
@@ -56,26 +55,23 @@ function authenticate_db(username,password,next,res){
           timestamp:(+ new Date()),
           count:1
         };
-        next(new ldap.InvalidCredentialsError());
+        next(1);
       }
     }
   });
   result.on('end',function(){
     if(!cnt)
-      next(new ldap.InvalidCredentialsError());
+      next(1);
   });
 }
 
-function authenticate(username, password,next,res) {
+function authenticate(username, password,next) {
   // this is just an example which allows any pair of 
   // username/password which are the same
   // TODO connect with our own user database for authentication
   //return username === password;
-  if(log[username]){
-    if(multi_Login(log[username]))return false;
-    authenticate_db(username,password,next,res);
-  }
-  authenticate_db(username,password,next,res);
+  if(log[username]&&multi_Login(log[username]))return false;
+  else authenticate_db(username,password,next);
 }
 
 var ldap = require('ldapjs');
@@ -91,7 +87,13 @@ server.bind('ou=users', function(req, res, next) {
   if (!first_pair.cn)
     return next(new ldap.InvalidCredentialsError());
   
-  authenticate(first_pair.cn, req.credentials,next,res);
+  authenticate(first_pair.cn, req.credentials,function(err){
+    if(err)return next(new ldap.InvalidCredentialsError());
+    else{
+      res.end();
+      next();
+    }
+  });
   
   //res.end();
 });
