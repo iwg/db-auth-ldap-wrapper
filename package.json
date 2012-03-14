@@ -1,11 +1,7 @@
 {
   "author": "",
   "name": "db-auth-ldap-wrapper",
-<<<<<<< HEAD
-  "version": "0.0.0",
-=======
   "version": "0.0.1",
->>>>>>> cnx
   "repository": {
     "type": "git",
     "url": "git://github.com/iwg/db-auth-ldap-wrapper.git"
@@ -14,12 +10,8 @@
     "node": "~0.6.4"
   },
   "dependencies": {
-<<<<<<< HEAD
-    "bunyan": "~0.6.8"
-=======
     "ldapjs": "~0.5.0",
     "nodejs-mysql-naive": "~0.4.5"
->>>>>>> cnx
   },
   "devDependencies": {}
 }

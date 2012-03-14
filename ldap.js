@@ -2,7 +2,6 @@
 // $ ldapsearch -H ldap://localhost:1389 -x -D cn=username,ou=users -w password -b "o=myhost" objectclass=*
 //                                                         ^^^^^^^^
 
-<<<<<<< HEAD
 var config = require('./config');
 var db = require('mysql-native').createTCPClient(config.dbIP);
 var crypto = require('crypto');
@@ -10,26 +9,10 @@ var log = [];
 
 db.auto_prepare = true;
 ab.auth(config.dbPass, config.dbUser);
-=======
-var config=require("./config");
-var db=require("mysql-native").createTCPClient(config.dbHost);
-var crypto=require('crypto');
-var log=[];
-
-db.auto_prepare=true;
-db.auth(config.dbPass,config.dbUser);
->>>>>>> cnx
 
 // Authenticate according to the username/password provided
 // @return true if the credentials are correct
 // @return false if the authentication is failed
-<<<<<<< HEAD
-function authenticate_db(username, password) {
-  // TODO
-}
-
-function authenticate(username, password) {
-=======
 
 function need_To_Reset(record){
     return (+ new Date())-record.timestamp>config.loginTrialTimeout;
@@ -82,12 +65,7 @@ function authenticate_db(username,password,next){
   });
 }
 
-<<<<<<< HEAD
 function authenticate(username, password,next) {
-=======
-function authenticate(username, password,next,res) {
->>>>>>> cnx
->>>>>>> 9ed3eb69e754068e7387fe032a7278a23f1827d8
   // this is just an example which allows any pair of 
   // username/password which are the same
   // TODO connect with our own user database for authentication

@@ -1,10 +1,6 @@
-<<<<<<< HEAD
 node_modules
 *.log
 *.tmp
-=======
-TermKit
 .~
 .log
 .tmp
->>>>>>> cnx
