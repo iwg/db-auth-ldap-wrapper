@@ -60,7 +60,7 @@ function db_authenticate(username, password, next) {
 function authenticate(username, password, next) {
     // this is just an example which allows any pair of 
     // username/password which are the same
-    if (log[username] && multi_login(log[username])) return false;
+    if (log[username] && multi_login(log[username])) next(1);
     else db_authenticate(username, password, next);
 }
 
