@@ -8,7 +8,7 @@ var crypto = require('crypto');
 var log = [];
 
 db.auto_prepare = true;
-ab.auth(config.dbPass, config.dbUser);
+db.auth(config.dbPass, config.dbUser);
 
 // Authenticate according to the username/password provided
 // @return true if the credentials are correct
