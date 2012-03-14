@@ -42,6 +42,7 @@ function db_authenticate(username, password, next) {
                 log[username] = new_log();
             } else {
                 log[username].count++;
+                next(1);
             }
         } else {
             log[username] = new_log();
