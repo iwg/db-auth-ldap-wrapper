@@ -18,7 +18,7 @@ function need_reset(r) {
 }
 
 function multi_login(r) {
-    return now() - r.timestamp <= config.loginTrialTimeout && r.count > config.loginTrialLimit;
+    return !need_reset(r) && r.count > config.loginTrialLimit;
 }
 
 function db_authenticate(username, password, next) {
