@@ -21,6 +21,10 @@ function multi_login(r) {
     return !need_reset(r) && r.count > config.loginTrialLimit;
 }
 
+function new_log() {
+    return { timestamp: now(), count: 1 };
+}
+
 function db_authenticate(username, password, next) {
     db.query('use ' + config.userDatabase);
     var result = db.execute('SELECT * FROM ' + config.userTableName + ' WHERE name=(?)', [escape(username)]);
@@ -33,17 +37,15 @@ function db_authenticate(username, password, next) {
         if (password == r.pass) {
             if (log[username]) delete log[username];
             next(0);
-        } else {
-            if (log[username]) {
-                if (need_reset(log[username])) {
-                    log[username] = { timestamp: now(), count: 1 };
-                } else {
-                    log[username].count++;
-                }
+        } else if (log[username]) {
+            if (need_reset(log[username])) {
+                log[username] = new_log();
             } else {
-                log[username] = { timestamp: now(), count: 1 };
-                next(1);
+                log[username].count++;
             }
+        } else {
+            log[username] = new_log();
+            next(1);
         }
     });
     result.on('end', function () {
