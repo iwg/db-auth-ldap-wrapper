@@ -9,47 +9,39 @@ var log = [];
 db.auto_prepare = true;
 db.auth(config.dbPass, config.dbUser);
 
-function need_To_Reset(record) {
-    return (+new Date()) - record.timestamp > config.loginTrialTimeout;
+function now() {
+    return +new Date();
 }
 
-function multi_Login(record) {
-    return (+new Date()) - record.timestamp <= config.loginTrialTimeout && record.count > config.loginTrialLimit;
+function need_reset(r) {
+    return now() - r.timestamp > config.loginTrialTimeout;
 }
 
-// Authenticate according to the username/password provided
-// @return true if the credentials are correct
-// @return false if the authentication is failed
-function authenticate_db(username, password, next) {
-    db.query("use " + config.userDatabase);
-    var result = db.execute("SELECT * FROM " + config.userTableName + " WHERE name=(?)", [escape(username)]);
+function multi_login(r) {
+    return now() - r.timestamp <= config.loginTrialTimeout && r.count > config.loginTrialLimit;
+}
+
+function db_authenticate(username, password, next) {
+    db.query('use ' + config.userDatabase);
+    var result = db.execute('SELECT * FROM ' + config.userTableName + ' WHERE name=(?)', [escape(username)]);
     var cnt = 0;
     result.on('row', function (r) {
-        ++cnt;
-        var iter = r.iter;
-        var salt = r.salt;
-        for (var i = 0; i < iter; i++) {
-            password += salt;
-            password = crypto.createHash("md5").update(password).digest("hex");
+        cnt++;
+        for (var i = 0; i < r.iter; i++) {
+            password = crypto.createHash('md5').update(password + r.salt).digest('hex');
         }
         if (password == r.pass) {
             if (log[username]) delete log[username];
             next(0);
         } else {
             if (log[username]) {
-                if (need_To_Reset(log[username])) {
-                    log[username] = {
-                        timestamp: (+new Date()),
-                        count: 1
-                    };
+                if (need_reset(log[username])) {
+                    log[username] = { timestamp: now(), count: 1 };
                 } else {
-                    ++log[username].count;
+                    log[username].count++;
                 }
             } else {
-                log[username] = {
-                    timestamp: (+new Date()),
-                    count: 1
-                };
+                log[username] = { timestamp: now(), count: 1 };
                 next(1);
             }
         }
@@ -59,13 +51,14 @@ function authenticate_db(username, password, next) {
     });
 }
 
+// Authenticate according to the username/password provided
+// @return true if the credentials are correct
+// @return false if the authentication is failed
 function authenticate(username, password, next) {
     // this is just an example which allows any pair of 
     // username/password which are the same
-    // TODO connect with our own user database for authentication
-    //return username === password;
-    if (log[username] && multi_Login(log[username])) return false;
-    else authenticate_db(username, password, next);
+    if (log[username] && multi_login(log[username])) return false;
+    else db_authenticate(username, password, next);
 }
 
 var ldap = require('ldapjs');
@@ -87,12 +80,11 @@ server.bind('ou=users', function (req, res, next) {
             next();
         }
     });
-
-    //res.end();
 });
 
 // TODO find username by email address
 // TODO find public user information by username
+
 server.listen(1389, function () {
     console.log('LDAP server listening at %s', server.url);
 });
