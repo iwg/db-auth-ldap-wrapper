@@ -86,7 +86,36 @@ server.bind('ou=users', function (req, res, next) {
 });
 
 // TODO find username by email address
+server.search('ou=email',function(req,res,next){
+    var emailAddress=req.filter.toString();
+    db.query('use ' + config.userDatabase);
+    var result=db.execute('SELECT * FROM ' + config.userTableName + ' WHERE email=(?)', [escape(emailAddress)]);
+    var cnt=0;
+    result.on('row',function(r){
+        ++cnt;
+        res.send({name:r.name});
+    });
+    result.on('end',function(r){
+        if(!cnt)
+            res.send({});
+    });
+});
+
 // TODO find public user information by username
+server.search('ou=users',function(req,res,next){
+    var userName=req.filter.toString();
+    db.query('use ' + config.userDatabase);
+    var result=db.execute('SELECT * FROM ' + config.userTableName + ' WHERE name=(?)', [escape(userName)]);
+    var cnt=0;
+    result.on('row',function(r){
+        ++cnt;
+        res.send({name:r.name,email:r.email});
+    });
+    result.on('end',function(r){
+        if(!cnt)
+            res.send({});
+    });
+});
 
 server.listen(1389, function () {
     console.log('LDAP server listening at %s', server.url);
