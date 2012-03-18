@@ -87,33 +87,55 @@ server.bind('ou=users', function (req, res, next) {
 
 // TODO find username by email address
 server.search('ou=email',function(req,res,next){
-    var emailAddress=req.filter.toString();
+//ldapsearch -H ldap://localhost:1389 -x -b "ou=email" email=emailAddress
+    var emailAddress=req.filter.value;
     db.query('use ' + config.userDatabase);
     var result=db.execute('SELECT * FROM ' + config.userTableName + ' WHERE email=(?)', [escape(emailAddress)]);
     var cnt=0;
     result.on('row',function(r){
         ++cnt;
-        res.send({name:r.name});
+        var obj={
+            dn:'user='+r.name,
+            attributes:{
+                user:r.name,
+                name:r.display_name,
+                email:r.email,
+                objectclass:'user'
+            }
+        };
+        res.send(obj);
     });
     result.on('end',function(r){
-        if(!cnt)
-            res.send({});
+        res.end();
+        next();
     });
 });
 
 // TODO find public user information by username
 server.search('ou=users',function(req,res,next){
-    var userName=req.filter.toString();
+//ldapsearch -H ldap://localhost:1389 -x -D cn=username,ou=users -w password -b "ou=users" name=cnx
+    if(!req.connection.ldap.bindDN.equals('ou=users'))
+        return next(new ldap.InsufficientAccessRightsError());
+    var userName=req.filter.value;
     db.query('use ' + config.userDatabase);
     var result=db.execute('SELECT * FROM ' + config.userTableName + ' WHERE name=(?)', [escape(userName)]);
     var cnt=0;
     result.on('row',function(r){
         ++cnt;
-        res.send({name:r.name,email:r.email});
+        var obj={
+            dn:'user='+userName,
+            attributes:{
+                user:r.name,
+                name:r.display_name,
+                email:r.email,
+                objectclass:'user'
+            }
+        };
+        res.send(obj);
     });
     result.on('end',function(r){
-        if(!cnt)
-            res.send({});
+        res.end();
+        next();
     });
 });
 
