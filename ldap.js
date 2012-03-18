@@ -1,8 +1,18 @@
 // Usage:
-// $ ldapsearch -H ldap://localhost:1389 -x -D cn=username,ou=users -w password -b "o=myhost" objectclass=*
-//                                                         ^^^^^^^^
+// 
+// Authenticate:
+// ldapsearch -H ldap://localhost:1389 -x -D cn=username,ou=users -w password
+//
+// username->Information:
+// ldapsearch -H ldap://localhost:1389 -x -D cn=username,ou=users -w password -b "ou=users" name=cnx
+//
+// emailAddress->username:
+// ldapsearch -H ldap://localhost:1389 -x -b "ou=email" email=emailAddress
+//
+// don't forget to change the config defined in config.js
+
 var config = require('./config');
-var db = require('mysql-native').createTCPClient(config.dbIP);
+var db = require('mysql-native').createTCPClient(config.dbHost);
 var crypto = require('crypto');
 var log = [];
 
@@ -22,7 +32,10 @@ function multi_login(r) {
 }
 
 function new_log() {
-    return { timestamp: now(), count: 1 };
+    return {
+        timestamp: now(),
+        count: 1
+    };
 }
 
 function db_authenticate(username, password, next) {
@@ -54,12 +67,7 @@ function db_authenticate(username, password, next) {
     });
 }
 
-// Authenticate according to the username/password provided
-// @return true if the credentials are correct
-// @return false if the authentication is failed
 function authenticate(username, password, next) {
-    // this is just an example which allows any pair of 
-    // username/password which are the same
     if (log[username] && multi_login(log[username])) next(1);
     else db_authenticate(username, password, next);
 }
@@ -69,9 +77,6 @@ var ldap = require('ldapjs');
 var server = ldap.createServer();
 
 server.bind('ou=users', function (req, res, next) {
-    // bind operation guarantees at least there is a pair 'ou=users'
-    // which is { ou: 'users' } in the following shifting
-    // we expect the first pair to be something like { cn: 'username' }
     var first_pair = req.dn.shift();
 
     if (!first_pair.cn) return next(new ldap.InvalidCredentialsError());
@@ -85,55 +90,50 @@ server.bind('ou=users', function (req, res, next) {
     });
 });
 
-// TODO find username by email address
-server.search('ou=email',function(req,res,next){
-//ldapsearch -H ldap://localhost:1389 -x -b "ou=email" email=emailAddress
-    var emailAddress=req.filter.value;
+server.search('ou=email', function (req, res, next) {
+    
+    var emailAddress = req.filter.value;
     db.query('use ' + config.userDatabase);
-    var result=db.execute('SELECT * FROM ' + config.userTableName + ' WHERE email=(?)', [escape(emailAddress)]);
-    var cnt=0;
-    result.on('row',function(r){
+    var result = db.execute('SELECT * FROM ' + config.userTableName + ' WHERE email=(?)', [escape(emailAddress)]);
+    var cnt = 0;
+    result.on('row', function (r) {
         ++cnt;
-        var obj={
-            dn:'user='+r.name,
-            attributes:{
-                user:r.name,
-                name:r.display_name,
-                email:r.email,
-                objectclass:'user'
+        var obj = {
+            dn: 'user=' + r.name,
+            attributes: {
+                user: r.name,
+                objectclass: 'user'
             }
         };
         res.send(obj);
     });
-    result.on('end',function(r){
+    result.on('end', function (r) {
         res.end();
         next();
     });
 });
 
-// TODO find public user information by username
-server.search('ou=users',function(req,res,next){
-//ldapsearch -H ldap://localhost:1389 -x -D cn=username,ou=users -w password -b "ou=users" name=cnx
-    if(!req.connection.ldap.bindDN.equals('ou=users'))
-        return next(new ldap.InsufficientAccessRightsError());
-    var userName=req.filter.value;
+server.search('ou=users', function (req, res, next) {
+    
+    if (!req.connection.ldap.bindDN.equals('ou=users')) return next(new ldap.InsufficientAccessRightsError());
+    var userName = req.filter.value;
     db.query('use ' + config.userDatabase);
-    var result=db.execute('SELECT * FROM ' + config.userTableName + ' WHERE name=(?)', [escape(userName)]);
-    var cnt=0;
-    result.on('row',function(r){
+    var result = db.execute('SELECT * FROM ' + config.userTableName + ' WHERE name=(?)', [escape(userName)]);
+    var cnt = 0;
+    result.on('row', function (r) {
         ++cnt;
-        var obj={
-            dn:'user='+userName,
-            attributes:{
-                user:r.name,
-                name:r.display_name,
-                email:r.email,
-                objectclass:'user'
+        var obj = {
+            dn: 'user=' + userName,
+            attributes: {
+                user: r.name,
+                display_name: r.display_name,
+                email: r.email,
+                objectclass: 'user'
             }
         };
         res.send(obj);
     });
-    result.on('end',function(r){
+    result.on('end', function (r) {
         res.end();
         next();
     });
