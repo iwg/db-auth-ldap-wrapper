@@ -115,7 +115,6 @@ server.search('ou=email', function (req, res, next) {
 
 server.search('ou=users', function (req, res, next) {
     
-    if (!req.connection.ldap.bindDN.equals('ou=users')) return next(new ldap.InsufficientAccessRightsError());
     var userName = req.filter.value;
     db.query('use ' + config.userDatabase);
     var result = db.execute('SELECT * FROM ' + config.userTableName + ' WHERE name=(?)', [escape(userName)]);
