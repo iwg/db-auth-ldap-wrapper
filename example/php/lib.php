@@ -16,14 +16,17 @@ function authenticate($username,$password){
 
 function getInformation($username){
     global $ds;
-    return ldap_search($ds,"ou=users","name=".$username);
+    $sr=ldap_search($ds,"ou=users","name=".$username);
+    return ldap_get_entries($ds, $sr);
 }
 
 function getUsername($email){
     global $ds;
-    return ldap_search($ds,"ou=email","email=".$email);
+    $sr=ldap_search($ds,"ou=email","email=".$email);
+    return ldap_get_entries($ds, $sr);
 }
 
 //$sr=authenticate("cnx","cnx");
+//print_r(getInformation("cnx"));
 
 ?>
