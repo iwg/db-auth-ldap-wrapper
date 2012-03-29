@@ -9,15 +9,15 @@ Just download from [nodejs](nodejs.org).
 
 If you are using Ubuntu:
 
-./configure
+    ./configure
 
-make
+    make
 
-make install
+    make install
 
 If you are using Windows:
 
-just run the msi file to install
+    just run the msi file to install
 
 ###How to install npm(the tools for manage modules using in NodeJS)
 
