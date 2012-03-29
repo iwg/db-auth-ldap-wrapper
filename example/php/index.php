@@ -24,6 +24,5 @@
     
     <p>email地址:<input type="text" id="email"/></p>
     <input type="button" onclick="">
-    
 </body>
 </html>
