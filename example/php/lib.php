@@ -1,32 +1,25 @@
 <?php
-error_reporting(E_ALL & ~E_NOTICE);
 
-$config=array();
+class ldap{
+    var $ds;
+    
+    function __construct($host,$port){
+        $this->ds=ldap_connect($host,$port);
+    }
+    
+    function authenticate($username,$password){
+        return ldap_bind($this->ds,"cn=".$username.",ou=users",$password);
+    }
 
-//服务器地址
-$config["serverHost"]="localhost";
-$config["serverPort"]=1389;
+    function getInformation($username){
+        $sr=ldap_search($this->ds,"ou=users","name=".$username);
+        return ldap_get_entries($this->ds, $sr);
+    }
 
-$ds = ldap_connect($config["serverHost"], $config["serverPort"]);
-
-function authenticate($username,$password){
-    global $ds;
-    return ldap_bind($ds,"cn=".$username.",ou=users",$password);
+    function getUsername($email){
+        $sr=ldap_search($this->ds,"ou=email","email=".$email);
+        return ldap_get_entries($this->ds, $sr);
+    }
 }
-
-function getInformation($username){
-    global $ds;
-    $sr=ldap_search($ds,"ou=users","name=".$username);
-    return ldap_get_entries($ds, $sr);
-}
-
-function getUsername($email){
-    global $ds;
-    $sr=ldap_search($ds,"ou=email","email=".$email);
-    return ldap_get_entries($ds, $sr);
-}
-
-//$sr=authenticate("cnx","cnx");
-//print_r(getInformation("cnx"));
 
 ?>
