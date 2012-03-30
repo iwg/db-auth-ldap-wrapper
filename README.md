@@ -9,6 +9,10 @@ Just download from [nodejs](nodejs.org).
 
 If you are using Ubuntu:
 
+    sudo apt-get install zlib1g-dev
+
+    sudo apt-get install libssl-dev
+
     ./configure
 
     make
@@ -45,8 +49,16 @@ to
 
 and restart Apache. You can visit the phpinfo() page to check it.
 
-###How to install this application?
+###How to get, install, and run this application?
 
     sudo npm install ldapjs
+    
+    cd ~/node_modules/
+    
+    git clone https://github.com/sidorares/nodejs-mysql-native
+    
+    mv nodejs-mysql-native mysql-native
+    
+    cd ~/db-auth-ldap-wrapper/
     
     node ldap.js
