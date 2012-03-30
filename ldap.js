@@ -77,8 +77,8 @@ var ldap = require('ldapjs');
 var server = ldap.createServer();
 
 server.bind('ou=users', function (req, res, next) {
-    var first_pair = req.dn.shift();
-
+    var first_pair = req.dn.rdns[0];
+    
     if (!first_pair.cn) return next(new ldap.InvalidCredentialsError());
 
     authenticate(first_pair.cn, req.credentials, function (err) {
@@ -124,6 +124,7 @@ server.search('ou=users', function (req, res, next) {
         var obj = {
             dn: 'user=' + userName,
             attributes: {
+                id: r.id,
                 user: r.name,
                 display_name: r.display_name,
                 email: r.email,
@@ -136,6 +137,22 @@ server.search('ou=users', function (req, res, next) {
         res.end();
         next();
     });
+});
+
+server.modify('ou=users',function(req,res,next){
+    var user=req.dn.rdns[0]['cn'];
+    var b_user=req.connection.ldap.bindDN.rdns[0]['cn'];
+    
+    if(user!=b_user)
+        return next(new ldap.InsufficientAccessRightsError());
+    req.changes.forEach(function(c){
+        if(c.operation=='replace'){
+            var key=c.modification.type;
+            var value=c.modification.vals[0];
+            console.log(key,'=>',value);
+        }
+    });
+    res.end();
 });
 
 server.listen(1389, function () {
