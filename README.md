@@ -9,8 +9,6 @@ Just download from [nodejs](nodejs.org).
 
 If you are using Ubuntu:
 
-    sudo apt-get install zlib1g-dev
-
     sudo apt-get install libssl-dev
 
     ./configure
