@@ -20,6 +20,10 @@ class ldap{
         $sr=ldap_search($this->ds,"ou=email","email=".$email);
         return ldap_get_entries($this->ds, $sr);
     }
+    
+    function changeInformation($username,$array){
+        return ldap_modify($this->ds,"cn=".username."ou=users",array);
+    }
 }
 
 ?>

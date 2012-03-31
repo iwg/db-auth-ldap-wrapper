@@ -150,6 +150,8 @@ server.modify('ou=users',function(req,res,next){
             var key=c.modification.type;
             var value=c.modification.vals[0];
             console.log(key,'=>',value);
+            db.query('use ' + config.userDatabase);
+            db.execute('UPDATE '+config.userTableName+' SET (?) = (?) WHERE name= (?)',[escape(key),escape(value),escape(user)]);
         }
     });
     res.end();
