@@ -57,6 +57,10 @@ and restart Apache. You can visit the phpinfo() page to check it.
     
     mv nodejs-mysql-native mysql-native
     
+    cd ..
+    
+    git clone git://github.com/iwg/db-auth-ldap-wrapper.git
+    
     cd ~/db-auth-ldap-wrapper/
     
     node ldap.js
