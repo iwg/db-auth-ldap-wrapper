@@ -21,8 +21,9 @@ class ldap{
         return ldap_get_entries($this->ds, $sr);
     }
     
-    function changeInformation($username,$array){
-        return ldap_modify($this->ds,"cn=".username."ou=users",array);
+    function changeInformation($username,$password,$array){
+        $this->authenticate($username,$password);
+        return ldap_modify($this->ds,"cn=".$username.",ou=users",$array);
     }
 }
 
