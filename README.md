@@ -9,8 +9,6 @@ Just download from [nodejs](nodejs.org).
 
 If you are using Ubuntu:
 
-    sudo apt-get install zlib1g-dev
-
     sudo apt-get install libssl-dev
 
     ./configure
@@ -58,6 +56,10 @@ and restart Apache. You can visit the phpinfo() page to check it.
     git clone https://github.com/sidorares/nodejs-mysql-native
     
     mv nodejs-mysql-native mysql-native
+    
+    cd ..
+    
+    git clone git://github.com/iwg/db-auth-ldap-wrapper.git
     
     cd ~/db-auth-ldap-wrapper/
     
