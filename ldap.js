@@ -9,6 +9,18 @@
 // emailAddress->username:
 // ldapsearch -H ldap://localhost:1389 -x -b "ou=email" email=emailAddress
 //
+// change information
+// ldapmodify -x -H ldap://localhost:1389 -D cn=username,ou=users -w password
+// dn:cn=username,ou=users
+// changetype:modify
+// replace: key
+// key: value
+// -
+// replace: xxx
+// xxx:yyy
+// -
+// ...(so on)
+//
 // don't forget to change the config defined in config.js
 
 var config = require('./config');
@@ -40,7 +52,7 @@ function new_log() {
 
 function db_authenticate(username, password, next) {
     db.query('use ' + config.userDatabase);
-    var result = db.execute('SELECT * FROM ' + config.userTableName + ' WHERE name=(?)', [escape(username)]);
+    var result = db.execute('SELECT * FROM ' + config.userTableName + ' WHERE name=?', [username]);
     var cnt = 0;
     result.on('row', function (r) {
         cnt++;
@@ -72,6 +84,20 @@ function authenticate(username, password, next) {
     else db_authenticate(username, password, next);
 }
 
+function getPass(user,pass,next){
+    db.query('use ' + config.userDatabase);
+    var result = db.execute('SELECT * FROM ' + config.userTableName + ' WHERE name=?', [user]);
+    result.on('row',function(r){
+        var iter=r.iter;
+        var salt=r.salt;
+        for(var i=0;i<iter;i++){
+            pass+=salt;
+            pass=crypto.createHash("md5").update(pass).digest("hex");
+        }
+        next(pass);
+    });
+}
+
 var ldap = require('ldapjs');
 
 var server = ldap.createServer();
@@ -94,7 +120,7 @@ server.search('ou=email', function (req, res, next) {
     
     var emailAddress = req.filter.value;
     db.query('use ' + config.userDatabase);
-    var result = db.execute('SELECT * FROM ' + config.userTableName + ' WHERE email=(?)', [escape(emailAddress)]);
+    var result = db.execute('SELECT * FROM ' + config.userTableName + ' WHERE email=?', [emailAddress]);
     var cnt = 0;
     result.on('row', function (r) {
         ++cnt;
@@ -117,7 +143,7 @@ server.search('ou=users', function (req, res, next) {
     
     var userName = req.filter.value;
     db.query('use ' + config.userDatabase);
-    var result = db.execute('SELECT * FROM ' + config.userTableName + ' WHERE name=(?)', [escape(userName)]);
+    var result = db.execute('SELECT * FROM ' + config.userTableName + ' WHERE name=?', [userName]);
     var cnt = 0;
     result.on('row', function (r) {
         ++cnt;
@@ -149,9 +175,17 @@ server.modify('ou=users',function(req,res,next){
         if(c.operation=='replace'){
             var key=c.modification.type;
             var value=c.modification.vals[0];
-            console.log(key,'=>',value);
-            db.query('use ' + config.userDatabase);
-            db.execute('UPDATE '+config.userTableName+' SET (?) = (?) WHERE name= (?)',[escape(key),escape(value),escape(user)]);
+            //console.log(key,"=>",value);
+            if(key=="pass"){
+                value=getPass(user,value,function(pass){
+                    db.query('use ' + config.userDatabase);
+                    db.execute('UPDATE '+config.userTableName+' SET pass = ? WHERE name= ?',[pass,user]);
+                });
+            }
+            else{
+                db.query('use ' + config.userDatabase);
+                db.execute('UPDATE '+config.userTableName+' SET ' + escape(key) + ' = ? WHERE name= ?',[value,user]);
+            }
         }
     });
     res.end();
