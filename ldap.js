@@ -52,7 +52,7 @@ function new_log() {
 
 function db_authenticate(username, password, next) {
     db.query('use ' + config.userDatabase);
-    var result = db.execute('SELECT * FROM ' + config.userTableName + ' WHERE name=?', [username]);
+    var result = db.execute('SELECT * FROM ' + config.userTableName + ' WHERE name=? or email=?', [username,username]);
     var cnt = 0;
     result.on('row', function (r) {
         cnt++;
