@@ -22,14 +22,13 @@
 // ...(so on)
 //
 // don't forget to change the config defined in config.js
-
 var config = require('./config');
 var db = require('mysql-native').createTCPClient(config.dbHost);
 var crypto = require('crypto');
 var log = [];
 
 db.auto_prepare = true;
-db.auth(config.userTableName,config.dbUser, config.dbPass);
+db.auth(config.userTableName, config.dbUser, config.dbPass);
 
 function now() {
     return +new Date();
@@ -52,7 +51,7 @@ function new_log() {
 
 function db_authenticate(username, password, next) {
     db.query('use ' + config.userDatabase);
-    var result = db.execute('SELECT * FROM ' + config.userTableName + ' WHERE name=? or email=?', [username,username]);
+    var result = db.execute('SELECT * FROM ' + config.userTableName + ' WHERE name=? or email=?', [username, username]);
     var cnt = 0;
     result.on('row', function (r) {
         cnt++;
@@ -84,15 +83,15 @@ function authenticate(username, password, next) {
     else db_authenticate(username, password, next);
 }
 
-function getPass(user,pass,next){
+function getPass(user, pass, next) {
     db.query('use ' + config.userDatabase);
     var result = db.execute('SELECT * FROM ' + config.userTableName + ' WHERE name=?', [user]);
-    result.on('row',function(r){
-        var iter=r.iter;
-        var salt=r.salt;
-        for(var i=0;i<iter;i++){
-            pass+=salt;
-            pass=crypto.createHash("md5").update(pass).digest("hex");
+    result.on('row', function (r) {
+        var iter = r.iter;
+        var salt = r.salt;
+        for (var i = 0; i < iter; i++) {
+            pass += salt;
+            pass = crypto.createHash("md5").update(pass).digest("hex");
         }
         next(pass);
     });
@@ -104,7 +103,7 @@ var server = ldap.createServer();
 
 server.bind('ou=users', function (req, res, next) {
     var first_pair = req.dn.rdns[0];
-    
+
     if (!first_pair.cn) return next(new ldap.InvalidCredentialsError());
 
     authenticate(first_pair.cn, req.credentials, function (err) {
@@ -117,7 +116,7 @@ server.bind('ou=users', function (req, res, next) {
 });
 
 server.search('ou=email', function (req, res, next) {
-    
+
     var emailAddress = req.filter.value;
     db.query('use ' + config.userDatabase);
     var result = db.execute('SELECT * FROM ' + config.userTableName + ' WHERE email=?', [emailAddress]);
@@ -140,7 +139,7 @@ server.search('ou=email', function (req, res, next) {
 });
 
 server.search('ou=users', function (req, res, next) {
-    
+
     var userName = req.filter.value;
     db.query('use ' + config.userDatabase);
     var result = db.execute('SELECT * FROM ' + config.userTableName + ' WHERE name=?', [userName]);
@@ -165,26 +164,24 @@ server.search('ou=users', function (req, res, next) {
     });
 });
 
-server.modify('ou=users',function(req,res,next){
-    var user=req.dn.rdns[0]['cn'];
-    var b_user=req.connection.ldap.bindDN.rdns[0]['cn'];
-    
-    if(user!=b_user)
-        return next(new ldap.InsufficientAccessRightsError());
-    req.changes.forEach(function(c){
-        if(c.operation=='replace'){
-            var key=c.modification.type;
-            var value=c.modification.vals[0];
+server.modify('ou=users', function (req, res, next) {
+    var user = req.dn.rdns[0]['cn'];
+    var b_user = req.connection.ldap.bindDN.rdns[0]['cn'];
+
+    if (user != b_user) return next(new ldap.InsufficientAccessRightsError());
+    req.changes.forEach(function (c) {
+        if (c.operation == 'replace') {
+            var key = c.modification.type;
+            var value = c.modification.vals[0];
             //console.log(key,"=>",value);
-            if(key=="pass"){
-                value=getPass(user,value,function(pass){
+            if (key == "pass") {
+                value = getPass(user, value, function (pass) {
                     db.query('use ' + config.userDatabase);
-                    db.execute('UPDATE '+config.userTableName+' SET pass = ? WHERE name= ?',[pass,user]);
+                    db.execute('UPDATE ' + config.userTableName + ' SET pass = ? WHERE name= ?', [pass, user]);
                 });
-            }
-            else{
+            } else {
                 db.query('use ' + config.userDatabase);
-                db.execute('UPDATE '+config.userTableName+' SET ' + escape(key) + ' = ? WHERE name= ?',[value,user]);
+                db.execute('UPDATE ' + config.userTableName + ' SET ' + escape(key) + ' = ? WHERE name= ?', [value, user]);
             }
         }
     });
