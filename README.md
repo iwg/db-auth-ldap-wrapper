@@ -62,5 +62,9 @@ and restart Apache. You can visit the phpinfo() page to check it.
     git clone git://github.com/iwg/db-auth-ldap-wrapper.git
     
     cd ~/db-auth-ldap-wrapper/
+
+    sudo cp ldap.conf /etc/init/ldap.conf
+
+    sudo chmod u+x /etc/init/ldap.conf
     
     node ldap.js
