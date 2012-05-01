@@ -1,5 +1,5 @@
 // Usage:
-// 
+//
 // Authenticate:
 // ldapsearch -H ldap://localhost:1389 -x -D cn=username,ou=users -w password
 //

@@ -6,7 +6,7 @@ exports.userTableName = "users";
 // 数据库用户名
 exports.dbUser = "root";
 // 数据库密码
-exports.dbPass = "";
+exports.dbPass = "root";
 // 数据库地址
 exports.dbHost = "127.0.0.1";
 
