@@ -23,12 +23,14 @@
 //
 // don't forget to change the config defined in config.js
 var config = require('./config');
-var db = require('mysql-native').createTCPClient(config.dbHost);
+var db = require('mysql').createConnection({
+    host: config.dbHost,
+    user: config.dbUser,
+    password: config.dbPass,
+    database: config.userDatabase
+});
 var crypto = require('crypto');
 var log = [];
-
-db.auto_prepare = true;
-db.auth(config.userDatabase, config.dbUser, config.dbPass);
 
 function now() {
     return +new Date();
@@ -50,10 +52,9 @@ function new_log() {
 }
 
 function db_authenticate(username, password, next) {
-    db.query('use ' + config.userDatabase);
-    var result = db.execute('SELECT * FROM ' + config.userTableName + ' WHERE name=? or email=?', [username, username]);
+    var result = db.query('SELECT * FROM ' + config.userTableName + ' WHERE name=? or email=?', [username, username]);
     var cnt = 0;
-    result.on('row', function (r) {
+    result.on('result', function (r) {
         cnt++;
         for (var i = 0; i < r.iter; i++) {
             password = crypto.createHash('md5').update(password + r.salt).digest('hex');
@@ -72,8 +73,7 @@ function db_authenticate(username, password, next) {
             log[username] = new_log();
             next(1);
         }
-    });
-    result.on('end', function () {
+    }).on('end', function () {
         if (!cnt) next(1);
     });
 }
@@ -84,9 +84,8 @@ function authenticate(username, password, next) {
 }
 
 function getPass(user, pass, next) {
-    db.query('use ' + config.userDatabase);
-    var result = db.execute('SELECT * FROM ' + config.userTableName + ' WHERE name=?', [user]);
-    result.on('row', function (r) {
+    var result = db.query('SELECT * FROM ' + config.userTableName + ' WHERE name=?', [user]);
+    result.on('result', function (r) {
         var iter = r.iter;
         var salt = r.salt;
         for (var i = 0; i < iter; i++) {
@@ -118,10 +117,9 @@ server.bind('ou=users', function (req, res, next) {
 server.search('ou=email', function (req, res, next) {
 
     var emailAddress = req.filter.value;
-    db.query('use ' + config.userDatabase);
-    var result = db.execute('SELECT * FROM ' + config.userTableName + ' WHERE email=?', [emailAddress]);
+    var result = db.query('SELECT * FROM ' + config.userTableName + ' WHERE email=?', [emailAddress]);
     var cnt = 0;
-    result.on('row', function (r) {
+    result.on('result', function (r) {
         ++cnt;
         var obj = {
             dn: 'user=' + r.name,
@@ -131,8 +129,7 @@ server.search('ou=email', function (req, res, next) {
             }
         };
         res.send(obj);
-    });
-    result.on('end', function (r) {
+    }).on('end', function (r) {
         res.end();
         next();
     });
@@ -141,10 +138,9 @@ server.search('ou=email', function (req, res, next) {
 server.search('ou=users', function (req, res, next) {
 
     var userName = req.filter.value;
-    db.query('use ' + config.userDatabase);
-    var result = db.execute('SELECT * FROM ' + config.userTableName + ' WHERE name=?', [userName]);
+    var result = db.query('SELECT * FROM ' + config.userTableName + ' WHERE name=?', [userName]);
     var cnt = 0;
-    result.on('row', function (r) {
+    result.on('result', function (r) {
         ++cnt;
         var obj = {
             dn: 'user=' + userName,
@@ -157,8 +153,7 @@ server.search('ou=users', function (req, res, next) {
             }
         };
         res.send(obj);
-    });
-    result.on('end', function (r) {
+    }).on('end', function (r) {
         res.end();
         next();
     });
@@ -173,15 +168,12 @@ server.modify('ou=users', function (req, res, next) {
         if (c.operation == 'replace') {
             var key = c.modification.type;
             var value = c.modification.vals[0];
-            //console.log(key,"=>",value);
             if (key == "pass") {
                 value = getPass(user, value, function (pass) {
-                    db.query('use ' + config.userDatabase);
-                    db.execute('UPDATE ' + config.userTableName + ' SET pass = ? WHERE name= ?', [pass, user]);
+                    db.query('UPDATE ' + config.userTableName + ' SET pass = ? WHERE name= ?', [pass, user]);
                 });
             } else {
-                db.query('use ' + config.userDatabase);
-                db.execute('UPDATE ' + config.userTableName + ' SET ' + escape(key) + ' = ? WHERE name= ?', [value, user]);
+                db.query('UPDATE ' + config.userTableName + ' SET ' + db.escape(key) + ' = ? WHERE name= ?', [value, user]);
             }
         }
     });

@@ -49,22 +49,13 @@ and restart Apache. You can visit the phpinfo() page to check it.
 
 ###How to get, install, and run this application?
 
-    sudo npm install ldapjs
-    
-    cd ~/node_modules/
-    
-    git clone https://github.com/sidorares/nodejs-mysql-native
-    
-    mv nodejs-mysql-native mysql-native
-    
-    cd ..
+    npm install ldapjs
+    npm install git://github.com/felixge/node-mysql.git
     
     git clone git://github.com/iwg/db-auth-ldap-wrapper.git
-    
-    cd ~/db-auth-ldap-wrapper/
+    cd db-auth-ldap-wrapper/
 
     sudo cp ldap.conf /etc/init/ldap.conf
-
     sudo chmod u+x /etc/init/ldap.conf
     
     node ldap.js
