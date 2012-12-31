@@ -28,7 +28,7 @@ var crypto = require('crypto');
 var log = [];
 
 db.auto_prepare = true;
-db.auth(config.userTableName, config.dbUser, config.dbPass);
+db.auth(config.userDatabase, config.dbUser, config.dbPass);
 
 function now() {
     return +new Date();
